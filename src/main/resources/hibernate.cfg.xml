@@ -37,5 +37,6 @@
 
         <!-- List of XML mapping files -->
         <mapping resource="Students.hbm.xml"/>
+        <mapping resource="StudentLogins.hbm.xml"/>
     </session-factory>
 </hibernate-configuration>

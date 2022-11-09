@@ -22,20 +22,16 @@ public class StudentDao {
         this.factory = StudensSessionFactory.getFactory();
     }
 
-    public synchronized Students createNewStudent(Students students, boolean exists) {
+    public synchronized Students addNewStudent(Students students) {
         Session session = factory.openSession();
         Transaction tx = null;
-//        if (findStudentLoginsByEmail(studentLogin.getEmail()) != null) {
-//            throw new HibernateException("Student Login already exists.");
-//        }
+        if (findUserByEmailId(students.getEmail()) != null) {
+            throw new HibernateException("Student already exists.");
+        }
+
         try {
             tx = session.beginTransaction();
-            if(exists){
-                session.save(students);
-            }else {
-                session.save(students);
-            }
-
+            session.save(students);
             tx.commit();
         } catch (HibernateException e) {
             if (tx != null) tx.rollback();
@@ -47,6 +43,49 @@ public class StudentDao {
         return students;
     }
 
+    public synchronized Students updateStudent(Students students) {
+        Session session = factory.openSession();
+        Transaction tx = null;
+        if (findUserByEmailId(students.getEmail()) != null) {
+            try{
+                tx = session.beginTransaction();
+                session.saveOrUpdate(students);
+                tx.commit();
+            } catch (HibernateException e) {
+                if (tx != null) tx.rollback();
+                throw new HibernateException(e);
+            } finally {
+                session.close();
+            }
+        } else {
+            throw new HibernateException("Student Login with email: " + students.getEmail() +
+                    " not found.");
+        }
+        return students;
+    }
+
+    public synchronized void updateStudentBeforeRegistration(Students students) {
+        Transaction tx = null;
+        Session session = factory.openSession();
+        try {
+            tx = session.beginTransaction();
+            org.hibernate.query.Query query = session.createQuery
+                    ("UPDATE Students SET firstName = :firstName, " +
+                            "lastName = :lastName, password = :password, secretCode = :secretCode WHERE email = :email");
+            query.setParameter("firstName", students.getFirstName());
+            query.setParameter("lastName", students.getLastName());
+            query.setParameter("password", students.getPassword());
+            query.setParameter("secretCode", students.getSecretCode());
+            query.setParameter("email", students.getEmail());
+
+            query.executeUpdate();
+            tx.commit();
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+    }
 
     public Students findUserByEmailId(String userEmail) {
         Session session = factory.openSession();
@@ -59,7 +98,9 @@ public class StudentDao {
             }
             return (Students) list.get(0);
         } finally {
-            if (session != null) { session.close(); }
+            if (session != null) {
+                session.close();
+            }
         }
     }
 
@@ -73,7 +114,9 @@ public class StudentDao {
             query.setParameter("userEmail", email);
             query.executeUpdate();
         } finally {
-            if (session != null) { session.close(); }
+            if (session != null) {
+                session.close();
+            }
         }
     }
 
@@ -93,6 +136,27 @@ public class StudentDao {
         return true;
     }
 
+    public Students checkIfStudentIsRegistered(String userEmail) {
+        Session session = factory.openSession();
+        try {
+            org.hibernate.query.Query query =
+                    session.createQuery("FROM Students" +
+                            " WHERE email = :email AND isCodeVerified = :isCodeVerified");
+            query.setParameter("email", userEmail);
+            query.setParameter("isCodeVerified", true);
+            List list = query.list();
+            if (list.isEmpty()) {
+                return null;
+            }
+            return (Students) list.get(0);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+
+    }
+
     public Students findUserByEmailIdAndPassword(LoginObject userEmail) {
         Session session = factory.openSession();
         try {
@@ -108,7 +172,9 @@ public class StudentDao {
             }
             return (Students) list.get(0);
         } finally {
-            if (session != null) { session.close(); }
+            if (session != null) {
+                session.close();
+            }
         }
     }
 

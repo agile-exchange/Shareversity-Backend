@@ -1,0 +1,22 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="com.shareversity.restModels.StudentLogin" table="StudentLogins">
+
+        <meta attribute="class-description">
+            This class contains the Student Logins detail.
+        </meta>
+
+        <id name = "email" type = "string" column = "Email">
+            <generator class="assigned"/>
+        </id>
+
+        <property name="studentPassword" column="StudentPassword" type="string" />
+
+        <property name="loginTime" column="LoginTime" type="timestamp" />
+
+    </class>
+</hibernate-mapping>
