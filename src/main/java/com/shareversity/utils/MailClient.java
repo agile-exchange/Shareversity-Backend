@@ -54,6 +54,30 @@ public class MailClient {
 		}
 	}
 
+	public static void sendPasswordResetEmail(String toEmail) {
+		Properties props = new Properties();
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+
+		//create Authenticator object to pass in Session.getInstance argument
+		Authenticator auth = new Authenticator() {
+
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(EMAIL, PASS);
+			}
+		};
+		Session session = Session.getInstance(props, auth);
+
+		String resetLink = "http://localhost:8080/shareversity/password-create";
+		sendEmail(session, toEmail,"Password Reset Email Shareversity Account",
+				"Hello! \n \n" +
+						"Password Reset link: " + resetLink + "\n" +
+						"Thanks," + "\n" +
+						"Shareversity Team");
+	}
 	public static boolean validateEmail(String email) {
 		boolean isValid = false;
 		try {

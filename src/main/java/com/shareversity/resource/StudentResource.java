@@ -199,6 +199,43 @@ public class StudentResource {
                 entity("Password Changed Successfully!").build();
     }
 
+    @POST
+    @Path("/password-reset")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response sendPasswordResetLink(PasswordResetObject passwordResetObject) {
+        String studentEmail = passwordResetObject.getEmail();
+
+        if (studentEmail == null) {
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity("Email Id can't be null").build();
+        }
+
+        if (studentEmail.trim().length() == 0) {
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity("Email can't be an Empty String, please enter a valid email").build();
+        }else {
+
+            Students students = studentDao.findUserByEmailId(studentEmail);
+
+            // Check if student's record exists
+            if (students == null) {
+                return Response.status(Response.Status.NOT_FOUND).
+                        entity("Email doesn't exist, please enter a valid email for password reset.").build();
+            }
+
+            // Check if student is a confirmed registered student
+            if (students.getIsCodeVerified() == false) {
+
+                return Response.status(Response.Status.NOT_FOUND).
+                        entity("Password can't be reset, please register first.").build();
+            }
+
+            MailClient.sendPasswordResetEmail(studentEmail);
+            return Response.status(Response.Status.OK).
+                    entity("Password Reset link sent successfully!").build();
+        }
+    }
     private boolean isValidEmailId(String userEmail) {
         if(userEmail.contains(".edu")){
             return true;

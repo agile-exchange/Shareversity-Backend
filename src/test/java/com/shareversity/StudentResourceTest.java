@@ -2,13 +2,13 @@ package com.shareversity;
 
 import com.shareversity.dao.StudentDao;
 import com.shareversity.resource.StudentResource;
-import com.shareversity.restModels.EmailVerification;
-import com.shareversity.restModels.LoginObject;
-import com.shareversity.restModels.PasswordChangeObject;
-import com.shareversity.restModels.Students;
+import com.shareversity.restModels.*;
 import jakarta.ws.rs.core.Response;
 import org.junit.*;
 
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.Date;
 
 public class StudentResourceTest {
@@ -28,19 +28,30 @@ public class StudentResourceTest {
     public static void setupAddRecords() {
         Students newStudent1 = new Students(1,"Test1","Student1",
                 "teststudent1@g.university.edu","testpassword1",new Date(),"12345",true);
-        Students newStudent2 = new Students(1,"Test2","Student2",
+        Students newStudent2 = new Students(2,"Test2","Student2",
                 "teststudent2@g.university.edu","testpassword2",new Date(),"123456",true);
-        Students newStudent3 = new Students(1,"Test3","Student3",
+        Students newStudent3 = new Students(3,"Test3","Student3",
                 "teststudent3@g.university.edu","testpassword3",new Date(),"123457",true);
+        Students newStudent7 = new Students(4,"Test7","Student7",
+                "teststudent7@g.university.edu","testpassword7",new Date(),"123457",true);
+        Students newStudent9 = new Students(5,"Test9","Student9",
+                "teststudent9@g.university.edu","testpassword9",new Date(),"123457",false);
 
         studentDao.addNewStudent(newStudent1);
         studentDao.addNewStudent(newStudent2);
         studentDao.addNewStudent(newStudent3);
+        studentDao.addNewStudent(newStudent7);
+        studentDao.addNewStudent(newStudent9);
     }
     @Test
     public void testSendRegistrationEmailInvalidEmail(){
         Students students = new Students();
         students.setEmail("tomcat@gmail.com");
+        students.setFirstName("Tom");
+        students.setLastName("Cat");
+        students.setPassword("123456");
+        students.setCreateDate(new Date());
+        students.setSecretCode("xyzabc");
         Response response = studentResource.sendRegistrationCode(students);
         String result = (String) response.getEntity();
         Assert.assertEquals("Please enter a valid student email Id with edu domain" , result);
@@ -171,6 +182,43 @@ public class StudentResourceTest {
         String result = (String) response.getEntity();
         Assert.assertEquals("Password Changed Successfully!", result);
     }
+
+    @Test
+    public void testPasswordResetForNullInput() {
+        PasswordResetObject passwordResetObject = new PasswordResetObject(null);
+        Response response = studentResource.sendPasswordResetLink(passwordResetObject);
+        Assert.assertEquals("Email Id can't be null", response.getEntity());
+    }
+    @Test
+    public void testPasswordResetForInvalidEmailId(){
+        PasswordResetObject passwordResetObject =
+                new PasswordResetObject("teststudent6@harvard.edu");
+        Response response = studentResource.sendPasswordResetLink(passwordResetObject);
+        String result = (String) response.getEntity();
+        Assert.assertEquals("Email doesn't exist, please enter a valid email for password reset.", result);
+    }
+    @Test
+    public void testPasswordResetForValidEmailId(){
+        PasswordResetObject passwordResetObject =
+                new PasswordResetObject("teststudent7@g.university.edu");
+        Response response = studentResource.sendPasswordResetLink(passwordResetObject);
+        String result = (String) response.getEntity();
+        Assert.assertEquals("Password Reset link sent successfully!", result);
+    }
+    @Test
+    public void testPasswordResetForEmptyEmailString(){
+        PasswordResetObject passwordResetObject = new PasswordResetObject("");
+        Response response = studentResource.sendPasswordResetLink(passwordResetObject);
+        Assert.assertEquals("Email can't be an Empty String, please enter a valid email", (String) response.getEntity());
+    }
+    @Test
+    public void testPasswordResetForUnregisteredStudent(){
+        PasswordResetObject passwordResetObject = new PasswordResetObject("teststudent9@g.university.edu");
+        Response response = studentResource.sendPasswordResetLink(passwordResetObject);
+        Assert.assertEquals("Password can't be reset, please register first.", (String) response.getEntity());
+    }
+
+
     @AfterClass
     public static void deleteForDuplicateDatabase() {
         StudentDao studentDao = new StudentDao();
@@ -180,5 +228,7 @@ public class StudentResourceTest {
         studentDao.deleteStudent("teststudent1@g.university.edu");
         studentDao.deleteStudent("teststudent2@g.university.edu");
         studentDao.deleteStudent("teststudent3@g.university.edu");
+        studentDao.deleteStudent("teststudent7@g.university.edu");
+        studentDao.deleteStudent("teststudent9@g.university.edu");
     }
 }
