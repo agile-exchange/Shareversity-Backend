@@ -36,12 +36,18 @@ public class StudentResourceTest {
                 "teststudent7@g.university.edu","testpassword7",new Date(),"123457",true);
         Students newStudent9 = new Students(5,"Test9","Student9",
                 "teststudent9@g.university.edu","testpassword9",new Date(),"123457",false);
+        Students newStudent10 = new Students(6,"Test10","Student10",
+                "teststudent10@g.university.edu","testpassword10",new Date(),"123457",false);
+        Students newStudent12 = new Students(7,"Test12","Student12",
+                "teststudent12@g.university.edu","testpassword12",new Date(),"123457",true);
 
         studentDao.addNewStudent(newStudent1);
         studentDao.addNewStudent(newStudent2);
         studentDao.addNewStudent(newStudent3);
         studentDao.addNewStudent(newStudent7);
         studentDao.addNewStudent(newStudent9);
+        studentDao.addNewStudent(newStudent10);
+        studentDao.addNewStudent(newStudent12);
     }
     @Test
     public void testSendRegistrationEmailInvalidEmail(){
@@ -209,16 +215,58 @@ public class StudentResourceTest {
     public void testPasswordResetForEmptyEmailString(){
         PasswordResetObject passwordResetObject = new PasswordResetObject("");
         Response response = studentResource.sendPasswordResetLink(passwordResetObject);
-        Assert.assertEquals("Email can't be an Empty String, please enter a valid email", (String) response.getEntity());
+        Assert.assertEquals("Email can't be an Empty String, please enter a valid email", response.getEntity());
     }
     @Test
     public void testPasswordResetForUnregisteredStudent(){
         PasswordResetObject passwordResetObject = new PasswordResetObject("teststudent9@g.university.edu");
         Response response = studentResource.sendPasswordResetLink(passwordResetObject);
-        Assert.assertEquals("Password can't be reset, please register first.", (String) response.getEntity());
+        Assert.assertEquals("Password can't be reset, please register first.", response.getEntity());
     }
 
+    @Test
+    public void testCreatePasswordInvalidStudent(){
+        PasswordCreateObject passwordCreateObject =
+                new PasswordCreateObject("testInvalidstudent@harvard.edu","password");
+        Response response = studentResource.createPassword(passwordCreateObject);
+        Assert.assertEquals("Invalid Student details. Student does not exist", response.getEntity());
+    }
 
+    @Test
+    public void testCreatePasswordNotRegisteredStudent(){
+        PasswordCreateObject passwordCreateObject =
+                new PasswordCreateObject("teststudent10@g.university.edu","password");
+        Response response = studentResource.createPassword(passwordCreateObject);
+        Assert.assertEquals("Student is not a registered student. Please register first.", response.getEntity());
+    }
+    @Test
+    public void testCreatePasswordNullRequest(){
+        PasswordCreateObject passwordCreateObject =
+                new PasswordCreateObject("teststudent10@g.university.edu",null);
+        Response response = studentResource.createPassword(passwordCreateObject);
+        Assert.assertEquals("Password can't be null or empty", response.getEntity());
+    }
+    @Test
+    public void testCreatePasswordEmptyRequest(){
+        PasswordCreateObject passwordCreateObject =
+                new PasswordCreateObject("teststudent10@g.university.edu","");
+        Response response = studentResource.createPassword(passwordCreateObject);
+        Assert.assertEquals("Password can't be null or empty", response.getEntity());
+    }
+    @Test
+    public void testCreatePasswordSameAsOldPassword(){
+        PasswordCreateObject passwordCreateObject =
+                new PasswordCreateObject("teststudent12@g.university.edu","testpassword12");
+        Response response = studentResource.createPassword(passwordCreateObject);
+        Assert.assertEquals("Password can't be same as old password.", response.getEntity());
+    }
+    @Test
+    public void testCreatePasswordSuccess(){
+        PasswordCreateObject passwordCreateObject =
+                new PasswordCreateObject("teststudent7@g.university.edu","testpassword20");
+        Response response = studentResource.createPassword(passwordCreateObject);
+        Assert.assertEquals("Congratulations Password is reset successfully!", response.getEntity());
+    }
     @AfterClass
     public static void deleteForDuplicateDatabase() {
         StudentDao studentDao = new StudentDao();
@@ -230,5 +278,7 @@ public class StudentResourceTest {
         studentDao.deleteStudent("teststudent3@g.university.edu");
         studentDao.deleteStudent("teststudent7@g.university.edu");
         studentDao.deleteStudent("teststudent9@g.university.edu");
+        studentDao.deleteStudent("teststudent10@g.university.edu");
+        studentDao.deleteStudent("teststudent12@g.university.edu");
     }
 }

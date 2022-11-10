@@ -236,6 +236,47 @@ public class StudentResource {
                     entity("Password Reset link sent successfully!").build();
         }
     }
+
+    @POST
+    @Path("/password-create")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createPassword(PasswordCreateObject passwordCreateObject) {
+        String email = passwordCreateObject.getEmail();
+        String password = passwordCreateObject.getPassword();
+
+        if (password == null || password.trim().length() == 0) {
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity("Password can't be null or empty").build();
+        }
+
+        // before create password, a student login should exist
+        Students student = studentDao.findUserByEmailId(email);
+
+        if (student == null) {
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity("Invalid Student details. Student does not exist").build();
+        }
+
+        if (!student.getIsCodeVerified()) {
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity("Student is not a registered student. Please register first.").build();
+        }
+
+        System.out.println(password);
+        System.out.println(student.getPassword());
+        if (password.equals(student.getPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity("Password can't be same as old password.").build();
+        }
+
+        student.setPassword(password);
+        studentDao.updateStudent(student);
+
+        return Response.status(Response.Status.BAD_REQUEST).
+                entity("Congratulations Password is reset successfully!").build();
+
+    }
     private boolean isValidEmailId(String userEmail) {
         if(userEmail.contains(".edu")){
             return true;
