@@ -24,6 +24,7 @@
         <property name="password" column="StudentPassword" type="java.lang.String" />
         <property name="createDate" column="CreateDate" type="java.util.Date" />
         <property name="secretCode" column="SecretCode" type="string" />
+        <property name="securityCodeExpiration" column="KeyExpiration" type="timestamp" />
         <property name="isCodeVerified" column="CodeVerified" type="java.lang.Boolean" />
 
     </class>

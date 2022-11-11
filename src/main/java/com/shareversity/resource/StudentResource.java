@@ -1,5 +1,6 @@
 package com.shareversity.resource;
 
+import com.lambdaworks.crypto.SCryptUtil;
 import com.shareversity.dao.StudentDao;
 import com.shareversity.dao.StudentLoginDao;
 import com.shareversity.restModels.*;
@@ -58,15 +59,19 @@ public class StudentResource {
 
         //todo: add security code constraint to be valid only for 15 minutes
         String secretCode = createSecretCode();
-        students.setSecretCode(secretCode);
 
-        MailClient.sendRegistrationEmail(firstName, studentEmail, secretCode);
+        // Create TimeStamp for Key Expiration for 15 min
+        Timestamp securityCodeExpiration = new Timestamp(System.currentTimeMillis()+ 15*60*1000);
+        students.setSecurityCodeExpiration(securityCodeExpiration);
+        students.setSecretCode(secretCode);
 
         students.setCreateDate(new Date());
 
+        boolean success = false;
         Students newStudent;
         if (studentObject == null) {
             newStudent = studentDao.addNewStudent(students);
+            success = true;
         } else {
             Students existingStudent = studentDao.findUserByEmailId(students.getEmail());
             existingStudent.setPassword(students.getPassword());
@@ -74,9 +79,12 @@ public class StudentResource {
             existingStudent.setFirstName(students.getFirstName());
             existingStudent.setCreateDate(new Date());
             newStudent = studentDao.updateStudent(existingStudent);
+            success = true;
         }
 
-        if (newStudent != null) {
+        if (newStudent != null && success == true) {
+            MailClient.sendRegistrationEmail(firstName, studentEmail, secretCode);
+
             return Response.status(Response.Status.OK).
                     entity("Security Code is sent Successfully!").build();
         }
@@ -95,7 +103,7 @@ public class StudentResource {
 
         Students student = studentDao.findUserByEmailId(email);
 
-        if(student==null){
+        if (student == null) {
             return Response.status(Response.Status.BAD_REQUEST).
                     entity("Invalid User").build();
         }
@@ -105,42 +113,60 @@ public class StudentResource {
                     entity("Security code is already verified").build();
         }
 
-        if (!securityCode.equals(student.getSecretCode())) {
+        String databaseSecurityCode = student.getSecretCode();
+        Timestamp expirationTime = student.getSecurityCodeExpiration();
+
+        System.out.println("databaseSecurityCode: " + databaseSecurityCode);
+        System.out.println("securityCode: " + securityCode);
+
+        if (!databaseSecurityCode.equals(securityCode)) {
             return Response.status(Response.Status.BAD_REQUEST).
                     entity("Please enter the correct security code").build();
+        } else {
+
+            Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+
+            // check if the database time is after the current time
+            if (expirationTime.after(currentTimestamp)) {
+                student.setIsCodeVerified(true);
+
+                //todo: change date to timestamp
+                student.setCreateDate(new Date());
+
+                // set code verified to true
+                boolean codeVerifiedUpdated = studentDao.updateUserCodeVerified(student);
+
+                if (!codeVerifiedUpdated) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).
+                            entity("Something Went Wrong. Please retry.").build();
+                }
+
+                StudentLogin studentLogin = new StudentLogin();
+                studentLogin.setEmail(student.getEmail());
+                studentLogin.setStudentPassword(student.getPassword());
+
+                Date date = new Date();
+                Timestamp timeStamp = new Timestamp(date.getTime());
+                studentLogin.setLoginTime(timeStamp);
+
+                StudentLogin studentLogin1 = studentLoginDao.createStudentLogin(studentLogin);
+
+
+                if (studentLogin1 == null) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).
+                            entity("Something Went Wrong. Please retry.").build();
+                }
+
+                return Response.status(Response.Status.OK).
+                        entity("You have successfully confirmed your account with the " +
+                                "email " + email + ". You will use this email address to log in.!").build();
+
+            } else {
+                return Response.status(Response.Status.OK).
+                        entity("Registration key expired, please request another security code.").build();
+
+            }
         }
-
-        student.setIsCodeVerified(true);
-
-        //todo: change date to timestamp
-        student.setCreateDate(new Date());
-
-        // set code verified to true
-        boolean codeVerifiedUpdated = studentDao.updateUserCodeVerified(student);
-
-        if (!codeVerifiedUpdated) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).
-                    entity("Something Went Wrong. Please retry.").build();
-        }
-
-        StudentLogin studentLogin = new StudentLogin();
-        studentLogin.setEmail(student.getEmail());
-        studentLogin.setStudentPassword(student.getPassword());
-
-        Date date = new Date();
-        Timestamp timeStamp = new Timestamp(date.getTime());
-        studentLogin.setLoginTime(timeStamp);
-
-        StudentLogin studentLogin1 = studentLoginDao.createStudentLogin(studentLogin);
-
-        if(studentLogin1==null){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).
-                    entity("Something Went Wrong. Please retry.").build();
-        }
-
-        return Response.status(Response.Status.OK).
-                entity("You have successfully confirmed your account with the " +
-                        "email " + email + ". You will use this email address to log in.!").build();
     }
 
     @POST

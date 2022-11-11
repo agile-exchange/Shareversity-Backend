@@ -6,9 +6,7 @@ import com.shareversity.restModels.*;
 import jakarta.ws.rs.core.Response;
 import org.junit.*;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.util.Date;
 
 public class StudentResourceTest {
@@ -27,19 +25,21 @@ public class StudentResourceTest {
 
     public static void setupAddRecords() {
         Students newStudent1 = new Students(1,"Test1","Student1",
-                "teststudent1@g.university.edu","testpassword1",new Date(),"12345",true);
+                "teststudent1@g.university.edu","testpassword1",new Date(),"12345",true, Timestamp.valueOf("2022-09-23 10:10:10.0"));
         Students newStudent2 = new Students(2,"Test2","Student2",
-                "teststudent2@g.university.edu","testpassword2",new Date(),"123456",true);
+                "teststudent2@g.university.edu","testpassword2",new Date(),"123456",true, Timestamp.valueOf("2022-09-23 10:10:10.0"));
         Students newStudent3 = new Students(3,"Test3","Student3",
-                "teststudent3@g.university.edu","testpassword3",new Date(),"123457",true);
+                "teststudent3@g.university.edu","testpassword3",new Date(),"123457",true, Timestamp.valueOf("2022-09-23 10:10:10.0"));
         Students newStudent7 = new Students(4,"Test7","Student7",
-                "teststudent7@g.university.edu","testpassword7",new Date(),"123457",true);
+                "teststudent7@g.university.edu","testpassword7",new Date(),"123457",true, Timestamp.valueOf("2022-09-23 10:10:10.0"));
         Students newStudent9 = new Students(5,"Test9","Student9",
-                "teststudent9@g.university.edu","testpassword9",new Date(),"123457",false);
+                "teststudent9@g.university.edu","testpassword9",new Date(),"123457",false, Timestamp.valueOf("2022-09-23 10:10:10.0"));
         Students newStudent10 = new Students(6,"Test10","Student10",
-                "teststudent10@g.university.edu","testpassword10",new Date(),"123457",false);
+                "teststudent10@g.university.edu","testpassword10",new Date(),"123457",false, Timestamp.valueOf("2022-09-23 10:10:10.0"));
         Students newStudent12 = new Students(7,"Test12","Student12",
-                "teststudent12@g.university.edu","testpassword12",new Date(),"123457",true);
+                "teststudent12@g.university.edu","testpassword12",new Date(),"123457",true, Timestamp.valueOf("2022-09-23 10:10:10.0"));
+        Students newStudent15 = new Students(8,"Test15","Student15",
+                "teststudent15@g.university.edu","testpassword15",new Date(),"123457",false, Timestamp.valueOf("2022-09-23 10:10:10.0"));
 
         studentDao.addNewStudent(newStudent1);
         studentDao.addNewStudent(newStudent2);
@@ -48,6 +48,7 @@ public class StudentResourceTest {
         studentDao.addNewStudent(newStudent9);
         studentDao.addNewStudent(newStudent10);
         studentDao.addNewStudent(newStudent12);
+        studentDao.addNewStudent(newStudent15);
     }
     @Test
     public void testSendRegistrationEmailInvalidEmail(){
@@ -134,6 +135,17 @@ public class StudentResourceTest {
                 "email " + emailVerification.getEmail() + ". You will use this email address to log in.!" , result);
     }
 
+    @Test
+    public void testVerificationCodeSecurityCodeExpired(){
+        StudentDao studentDao = new StudentDao();
+        Students userByEmailId = studentDao.findUserByEmailId("teststudent15@g.university.edu");
+        EmailVerification emailVerification = new EmailVerification();
+        emailVerification.setSecurityCode(userByEmailId.getSecretCode());
+        emailVerification.setEmail(userByEmailId.getEmail());
+        Response response = studentResource.verifySecurityCode(emailVerification);
+        String result = (String) response.getEntity();
+        Assert.assertEquals("Registration key expired, please request another security code." , result);
+    }
     @Test
     public void testVerificationCodeValidUserButInvalidCode(){
         Students students = new Students();
@@ -231,7 +243,6 @@ public class StudentResourceTest {
         Response response = studentResource.createPassword(passwordCreateObject);
         Assert.assertEquals("Invalid Student details. Student does not exist", response.getEntity());
     }
-
     @Test
     public void testCreatePasswordNotRegisteredStudent(){
         PasswordCreateObject passwordCreateObject =
@@ -280,5 +291,6 @@ public class StudentResourceTest {
         studentDao.deleteStudent("teststudent9@g.university.edu");
         studentDao.deleteStudent("teststudent10@g.university.edu");
         studentDao.deleteStudent("teststudent12@g.university.edu");
+        studentDao.deleteStudent("teststudent15@g.university.edu");
     }
 }

@@ -1,5 +1,6 @@
 package com.shareversity.restModels;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class Students {
@@ -11,9 +12,10 @@ public class Students {
     private Date createDate;
     private String secretCode;
     private boolean isCodeVerified;
+    private Timestamp securityCodeExpiration;
 
     public Students(int id, String firstName, String lastName,
-                    String email, String password, Date createDate, String secretCode, boolean isCodeVerified) {
+                    String email, String password, Date createDate, String secretCode, boolean isCodeVerified, Timestamp securityCodeExpiration) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -22,6 +24,7 @@ public class Students {
         this.createDate = createDate;
         this.secretCode = secretCode;
         this.isCodeVerified = isCodeVerified;
+        this.securityCodeExpiration = securityCodeExpiration;
     }
 
     public Students() {
@@ -89,6 +92,14 @@ public class Students {
 
     public void setIsCodeVerified(boolean codeVerified) {
         isCodeVerified = codeVerified;
+    }
+
+    public Timestamp getSecurityCodeExpiration() {
+        return securityCodeExpiration;
+    }
+
+    public void setSecurityCodeExpiration(Timestamp securityCodeExpiration) {
+        this.securityCodeExpiration = securityCodeExpiration;
     }
 }
 

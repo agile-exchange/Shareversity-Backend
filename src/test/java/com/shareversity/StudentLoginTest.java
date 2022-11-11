@@ -7,6 +7,7 @@ import com.shareversity.restModels.Students;
 import jakarta.ws.rs.core.Response;
 import org.junit.*;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class StudentLoginTest {
@@ -23,7 +24,7 @@ public class StudentLoginTest {
 
     public static void setupAddRecords(){
         Students newStudent1 = new Students(1,"Test1","Student1",
-                "teststudent1@g.university.edu","testpassword1",new Date(),"12345",true);
+                "teststudent1@g.university.edu","testpassword1",new Date(),"12345",true, Timestamp.valueOf("2022-09-23 10:10:10.0"));
 
         studentDao.addNewStudent(newStudent1);
     }
