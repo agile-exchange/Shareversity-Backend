@@ -19,9 +19,11 @@ public class StudentResource {
     StudentLoginDao studentLoginDao = new StudentLoginDao();
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_HTML)
     public String hello() {
-        return "Hello Shareversity Website!";
+        return "<body style=\"background-color:pink;\">" +
+                "<H1>Welcome to Shareversity Website, this is Backend!</H1>" +
+                "</body>";
     }
 
     @POST
